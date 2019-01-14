@@ -81,7 +81,7 @@ object Server extends Directives with JsonSupport{
       }
 
     def Consume():Unit={
-      val source = Consumer.plainSource(consumerSettings, Subscriptions.topics("test"))
+      val source = Consumer.plainSource(consumerSettings, Subscriptions.topics(ConfigFactory.load().getString("app.kafka.topic")))
         .map(consumerRecord => consumerRecord.value())
         .map(k=>{
           val message:CustomerCare.RouteMessage = CustomerCare.parseToRouteMessage(k)

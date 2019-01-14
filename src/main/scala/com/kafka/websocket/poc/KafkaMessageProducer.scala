@@ -5,6 +5,7 @@ import akka.kafka.ProducerSettings
 import akka.kafka.scaladsl.Producer
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
+import com.typesafe.config.ConfigFactory
 import org.apache.kafka.clients.producer.ProducerRecord
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -13,7 +14,6 @@ import spray.json._
   * Created by suresh on 10-01-2019.
   */
 object KafkaMessage {
-
   case class IncomingCall(customer: String, executive: String,query:String)
   implicit val IncomingCallFormat = jsonFormat3(IncomingCall)
 
@@ -33,7 +33,7 @@ object KafkaMessage {
 object KafkaMesageProducer{
   case object ProduceMessage
   case class UpdateExecutives(executivesList:List[String],action:Either[Int,Int])
-
+  val config = ConfigFactory.load()
   def props(producerSettings:ProducerSettings[Array[Byte], String])(implicit  mterializer:ActorMaterializer):Props={
     Props(new KafkaMessageProducer(producerSettings))
   }
@@ -50,7 +50,7 @@ class KafkaMessageProducer(producerSettings:ProducerSettings[Array[Byte], String
         val done = Source(1 to 1)
           .map(_.toString)
           .map { elem =>
-            new ProducerRecord[Array[Byte], String]("test", KafkaMessage.IncomingCall(
+            new ProducerRecord[Array[Byte], String](KafkaMesageProducer.config.getString("app.kafka.topic"), KafkaMessage.IncomingCall(
               customers(r.nextInt(customers.length)),
               executives(r.nextInt(executives.length)),
               queries(r.nextInt(queries.length))

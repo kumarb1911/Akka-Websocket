@@ -96,6 +96,7 @@
                let obj = JSON.parse(event.data)
                let tableHtmlStart = "<table class='table table-dark table-hover'><tbody><tr><td colspan='2' align='center'><h1>"+obj["category"]+"</h1></td></tr>"
                let tableHtmlEnd = "</tbody></table>"
+               delete obj["category"]
                for(prop in obj){
                     tableHtmlStart += "<tr><td>"+prop+"</td><td>"+(Array.isArray(obj[prop]) ? "<ol><li>"+obj[prop].join("</li><li>")+"</li><ol>" : obj[prop])+"</td></tr>"
                }
