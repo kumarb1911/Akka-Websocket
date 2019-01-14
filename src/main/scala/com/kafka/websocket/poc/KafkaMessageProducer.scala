@@ -15,7 +15,7 @@ import spray.json._
 object KafkaMessage {
 
   case class IncomingCall(customer: String, executive: String,query:String)
-  implicit val IncominCallFormat = jsonFormat3(IncomingCall)
+  implicit val IncomingCallFormat = jsonFormat3(IncomingCall)
 
   implicit val callJsonWriter = new JsonWriter[IncomingCall] {
     def write(call: IncomingCall): JsValue = {
@@ -33,7 +33,6 @@ object KafkaMessage {
 object KafkaMesageProducer{
   case object ProduceMessage
   case class UpdateExecutives(executivesList:List[String],action:Either[Int,Int])
-  case object Start
 
   def props(producerSettings:ProducerSettings[Array[Byte], String])(implicit  mterializer:ActorMaterializer):Props={
     Props(new KafkaMessageProducer(producerSettings))
@@ -42,33 +41,37 @@ object KafkaMesageProducer{
 class KafkaMessageProducer(producerSettings:ProducerSettings[Array[Byte], String])(implicit  materializer:ActorMaterializer) extends Actor{
   import KafkaMesageProducer._
   val customers:List[String]=List("John","David","Steven","Mark","Antony")
-  var executives:List[String]=List("kelly")
-  val queries = List("Home Loans","Car Loans","Credit Card","Savings Account","Application Status")
+  var executives:List[String]=List.empty
+  val queries = List("homeloan","carloan","creditcard","propertyloan","commercialloan")
   val r = new scala.util.Random
   override def receive ={
     case ProduceMessage =>{
-      val done = Source(1 to 1)
-        .map(_.toString)
-        .map { elem =>
-          println("==================\n"+executives+"\n======================")
-          new ProducerRecord[Array[Byte], String]("test", KafkaMessage.IncomingCall(
-            customers(r.nextInt(customers.length)),
-            executives(r.nextInt(executives.length)),
-            queries(r.nextInt(queries.length))
-          ).toJson.toString())
-        }
-        .runWith(Producer.plainSink(producerSettings))
+      if(!executives.isEmpty) {
+        val done = Source(1 to 1)
+          .map(_.toString)
+          .map { elem =>
+            new ProducerRecord[Array[Byte], String]("test", KafkaMessage.IncomingCall(
+              customers(r.nextInt(customers.length)),
+              executives(r.nextInt(executives.length)),
+              queries(r.nextInt(queries.length))
+            ).toJson.toString())
+          }
+          .runWith(Producer.plainSink(producerSettings))
+      }
+      else
+        println("No Executives Joined ...")
     }
     case UpdateExecutives(executivesList:List[String],action:Either[Int,Int]) =>{
       println("Updating executivesList ....")
       action match {
         case Left(a)  => {
-          executives = executives ::: executivesList
+          executives = executives ::: (executivesList diff executives)
           println(executives)
         }
         case Right(b) => executives = executives diff executivesList
       }
     }
+
     case _ =>{println("Unknown Message !!")}
   }
 }

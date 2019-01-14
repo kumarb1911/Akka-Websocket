@@ -6,6 +6,7 @@ object Executive {
   case class Connected(outgoing: ActorRef)
   case class IncomingMessage(text: String)
   case class OutgoingMessage(text: String)
+
 }
 
 class Executive(customerCareActor: ActorRef, kafkaProducerActor:ActorRef, exId:String) extends Actor {
